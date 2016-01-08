@@ -6,13 +6,13 @@
 import sys
 import optparse
 # import os
-from lib.stresstest import StressTest
+from lib.stresstest import *
 
 def Main():
     usage = '''Usage: %prog [-options][args]\r\n
     Example:
-    1. %prog -a xmas -c 100         // stress test with xmas app, draw with 100 times
-    2. %prog -a nine -p -c 200      // stress test with nine app, get H5 page with 200 times
+    1. %prog -a xmas -c 100             // stress test with xmas app, draw with 100 times
+    2. %prog -a nine -t page -c 200     // stress test with nine app, get H5 page with 200 times
     '''
     parser = optparse.OptionParser(usage=usage)
     # parser.add_option("-v", "--verbos",
@@ -33,8 +33,14 @@ def Main():
         return
 
     options, args = parser.parse_args()
-    st = StressTest(options.app, options.test_type, options.count)
-    st.stesstest()
+    try:
+        st = StressTest(options.app_name, options.test_type, options.count)
+        st.stress_test()
+    except ParamError, e:
+        print "The parameter you input is wrong: %s" % e.value
+    except GetEventError, e:
+        print "Get event id failed."
+        print "The response info is: %s" % e.value
 
 if __name__ == '__main__':
     Main()

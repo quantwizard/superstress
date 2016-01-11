@@ -7,6 +7,8 @@ import sys
 import optparse
 # import os
 from lib.stresstest import *
+from lib.logger import config_logger
+
 
 def Main():
     usage = '''Usage: %prog [-options][args]\r\n
@@ -21,18 +23,20 @@ def Main():
 
     parser.add_option("-a", "--app", dest="app_name", default="chun",
                       help="Specify the app you want to do stress test [default: %default]")
-
     parser.add_option("-c", "--count", dest="count", default="100",
                       help="Specify the http request times you want to sent [default: %default]")
-
     parser.add_option("-t", "--type", dest="test_type", default="draw",
                       help="Specify the test type. Currently only 2 types page/draw [default: %default]")
+    parser.add_option("-v", "--verbose",
+                      action="store_true", dest="verbose", default=False,
+                      help="Enable console output.")
 
     if len(sys.argv) == 1:
         parser.print_help()
         return
 
     options, args = parser.parse_args()
+    config_logger(options.verbose)
     try:
         st = StressTest(options.app_name, options.test_type, options.count)
         st.stress_test()

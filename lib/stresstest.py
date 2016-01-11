@@ -3,6 +3,7 @@
 # Copyright 2015-2016
 # Author: Liu Feng
 
+# from __future__ import division
 from ConfigParser import SafeConfigParser as scp
 import ConfigParser
 from logging import getLogger
@@ -10,7 +11,7 @@ import httplib2
 import json
 import threading
 import os
-from . import logger
+# from . import logger
 from .apisender import *
 
 lg = getLogger("sslogger")
@@ -123,7 +124,7 @@ class StressTest(object):
             msgType = "GET"
 
         cookie = ("snsapi_userinfo:%s="
-                  "{'openid':'%s'}") % (self.appid, self.openid)
+                  '{"openid":"%s"}') % (self.appid, self.openid)
         head = {
             "Connection": "Keep-Alive",
             "Cache-Control": "no-cache",

@@ -6,15 +6,15 @@ import base64
 # import json
 from urlparse import urljoin
 from logging import getLogger
-from threading import Lock
-from . import logger
-# import logger
+
 
 lg = getLogger("sslogger")
 # httplib2.debuglevel = 1
 
-lock = Lock()
-def sendAPI(http, email, password, host, path, head='', body='', count=1, msgType="GET"):    
+
+def sendAPI(http, email, password, host, path,
+            head='', body='', count=1,
+            msgType="GET"):
     if head == '' or head is None:
         headers = {
                     "Connection": "Keep-Alive",
@@ -27,10 +27,8 @@ def sendAPI(http, email, password, host, path, head='', body='', count=1, msgTyp
         headers = head
 
     url = urljoin(host, path)
-    if lock.acquire(1):
-        lg.info(url)
-        lock.release()
     for i in range(count):
+        lg.info(url)
         response, data = http.request(url, msgType, headers=headers, body=body)
     return response, data
 

@@ -6,7 +6,7 @@ import logging
 import os
 
 
-logger = logging.getLogger("autologger")
+logger = logging.getLogger("sslogger")
 logger.setLevel(logging.DEBUG)
 logPath = os.path.join(os.path.dirname(__file__), r"../ss.log")
 handler = logging.FileHandler(logPath)

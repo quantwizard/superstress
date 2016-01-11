@@ -13,7 +13,7 @@ import os
 from . import logger
 from .apisender import *
 
-lg = getLogger("autologger")
+lg = getLogger("sslogger")
 
 
 class StressTest(object):
@@ -82,6 +82,7 @@ class StressTest(object):
         res, data = sendAPI(self.http, '', '', self.host, path, head=headers,
                             body=body, msgType="POST")
         userInfo = json.loads(data)
+        lg.debug(userInfo)
         if userInfo:
             return userInfo["sessionID"]
         else:

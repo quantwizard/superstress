@@ -10,7 +10,7 @@ from threading import Lock
 from . import logger
 # import logger
 
-lg = getLogger("autologger")
+lg = getLogger("sslogger")
 # httplib2.debuglevel = 1
 
 lock = Lock()

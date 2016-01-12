@@ -38,11 +38,12 @@ class StressTest(object):
             self.openid = parser.get('userinfo', 'openid')
             self.appid = parser.get('appinfo', 'appid')
             self.app = app
+            self.event_id = self.__get_eventid()
             self.is_multiple = is_multiple
             if self.app not in [
                     'nine', 'xmas', 'chun',
                     'rotate', 'lottery', 'scratch',
-                    'box']:
+                    'box', 'face']:
                 raise ParamError(self.app)
             self.test_type = test_type
             if self.test_type not in ['page', 'draw']:
@@ -55,19 +56,26 @@ class StressTest(object):
             raise e
 
     def __get_path(self):
-        event_id = self.__get_eventid()
+
         if self.app == 'chun':
             if self.test_type == "draw":
-                return "app/chun/views/%s/draw" % event_id
+                return "app/chun/views/%s/draw" % self.event_id
             elif self.test_type == "page":
-                return "app/chun/views/" + event_id
+                return "app/chun/views/" + self.event_id
             else:
                 raise ParamError(self.test_type)
-        elif self.app in ['nine', 'xmas', 'rotate', 'lottery', 'scratch', 'box']:
+        elif self.app in ['nine', 'xmas', 'rotate', 'lottery', 'scratch', 'box', 'face']:
             if self.test_type == "draw":
-                return "app/%s/mobile/%s/draw" % (self.app, event_id)
+                return "app/%s/mobile/%s/draw" % (self.app, self.event_id)
             elif self.test_type == "page":
-                return "app/%s/mobile/%s" % (self.app, event_id)
+                return "app/%s/mobile/%s" % (self.app, self.event_id)
+            else:
+                raise ParamError(self.test_type)
+        elif self.app in ['face']:
+            if self.test_type == "draw":
+                return "app/%s/events/draw" % self.app
+            elif self.test_type == "page":
+                return "app/%s/views/%s" % (self.app, self.event_id)
             else:
                 raise ParamError(self.test_type)
         else:
@@ -103,8 +111,9 @@ class StressTest(object):
         elif self.app in ['nine', 'xmas', 'rotate', 'lottery', 'scratch']:
             path = "app/%s/events?page=1&pageSize=1" % self.app
         elif self.app in ['box']:
-            path = ("http://qing.mocha.server.sensoro.com/"
-                    "app/%s/create?page=1&count=1" % self.app)
+            path = "app/%s/create?page=1&count=1" % self.app
+        elif self.app in ['face']:
+            path = "app/%s/events?page=1&count=1" % self.app
         headers = {
             "Accept": "application/json, text/plain, */*",
             "Connection": "Keep-Alive",
@@ -123,12 +132,12 @@ class StressTest(object):
             lg.error("data: %s" % data)
             raise GetEventError(data)
         eventInfo = json.loads(data)
-        if self.app in ['chun', 'box']:
+        if self.app in ['chun', 'box', 'face']:
             return eventInfo["data"][0]["_id"]
         return eventInfo["events"][0]["_id"]
 
     def __get_unique_openid(self):
-        return uuid.uuid1()
+        return str(uuid.uuid1())
 
         # The following code has little propability to generate
         # same open id, so we use uuid instead.
@@ -144,16 +153,25 @@ class StressTest(object):
                 cookie = ("snsapi_userinfo:%s="
                           '{"openid":"%s"}') % (self.appid, openid)
                 headers = {
-                            "Connection": "Keep-Alive",
-                            "Cache-Control": "no-cache",
-                            "Content-Type": "application/json",
-                            "Cookie": cookie,
-                         }
+                    "Connection": "Keep-Alive",
+                    "Cache-Control": "no-cache",
+                    "Content-Type": "application/json",
+                    "Cookie": cookie,
+                }
                 if self.app in ['box']:
                     body = json.dumps({"openId": openid})
+                elif self.app in ['face']:
+                    body = json.dumps({
+                                      "eid": self.event_id,
+                                      "imgUrl": "http://7u2jeb.com1.z0.glb.clouddn.com/o_1a6f89q3jja9qdm10gb1dp41k2dn.jpg?imageMogr2/auto-orient",
+                                      "openId": openid,
+                                      "avatar": "http://picm.photophoto.cn/005/008/002/0080020468.jpg",
+                                      "nickname": "new user"
+                                      })
             lg.info(url)
             # lg.debug(body)
-            response, data = http.request(url, msg_type, headers=headers, body=body)
+            response, data = http.request(
+                url, msg_type, headers=headers, body=body)
             # lg.debug(response)
             # lg.debug(data)
 
@@ -162,6 +180,14 @@ class StressTest(object):
         if self.app in ['box']:
             # pdb.set_trace()
             body = json.dumps({"openId": self.openid})
+        elif self.app in ['face']:
+            body = json.dumps({
+                              "eid": self.event_id,
+                              "imgUrl": "http://7u2jeb.com1.z0.glb.clouddn.com/o_1a6f89q3jja9qdm10gb1dp41k2dn.jpg?imageMogr2/auto-orient",
+                              "openId": self.openid,
+                              "avatar": "http://picm.photophoto.cn/005/008/002/0080020468.jpg",
+                              "nickname": "new user"
+                              })
         else:
             body = ""
         if self.app in ['chun', 'box']:
@@ -185,10 +211,10 @@ class StressTest(object):
                 # http object is not thread safe, so we have to
                 # create http object for each thread
                 http = httplib2.Http()
-                request_times = self.count/t_count
+                request_times = self.count / t_count
                 # let the index 0 thread to add the remainer times
                 if left_times and i == 0:
-                    request_times = self.count/t_count + left_times
+                    request_times = self.count / t_count + left_times
                 t = threading.Thread(
                     target=self.__sendAPI,
                     args=(http, path, head, body,
@@ -205,7 +231,7 @@ class StressTest(object):
                 t = threading.Thread(
                     target=self.__sendAPI,
                     args=(http, path, '', '',
-                          self.count/t_count, msg_type)
+                          self.count / t_count, msg_type)
                 )
                 threads.append(t)
                 t.setDaemon(True)
@@ -215,18 +241,21 @@ class StressTest(object):
 
 
 class ParamError(Exception):
+
     def __init__(self, wrong_param):
         super(ParamError, self).__init__()
         self.value = wrong_param
 
 
 class GetEventError(Exception):
+
     def __init__(self, res_data):
         super(GetEventError, self).__init__()
         self.value = res_data
 
 
 class ConfigError(Exception):
+
     def __init__(self, config_param):
         super(GetEventError, self).__init__()
         self.value = config_param

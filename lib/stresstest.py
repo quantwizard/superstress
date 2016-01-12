@@ -132,21 +132,20 @@ class StressTest(object):
         return hashlib.md5(now+str(random_number)).hexdigest()
 
     def __sendAPI(self, http, path, headers, body, count, msg_type):
-        if self.is_multiple:
-            openid = self.__get_random_openid()
-            cookie = ("snsapi_userinfo:%s="
-                      '{"openid":"%s"}') % (self.appid, openid)
-            headers = {
-                        "Connection": "Keep-Alive",
-                        "Cache-Control": "no-cache",
-                        "Content-Type": "application/json",
-                        "Cookie": cookie,
-                     }
-            if self.app in ['box']:
-                body = json.dumps({"openId": openid})
-
         url = urljoin(self.host, path)
         for i in xrange(count):
+            if self.is_multiple:
+                openid = self.__get_random_openid()
+                cookie = ("snsapi_userinfo:%s="
+                          '{"openid":"%s"}') % (self.appid, openid)
+                headers = {
+                            "Connection": "Keep-Alive",
+                            "Cache-Control": "no-cache",
+                            "Content-Type": "application/json",
+                            "Cookie": cookie,
+                         }
+                if self.app in ['box']:
+                    body = json.dumps({"openId": openid})
             lg.info(url)
             # lg.debug(body)
             response, data = http.request(url, msg_type, headers=headers, body=body)

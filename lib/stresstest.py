@@ -9,9 +9,11 @@ import ConfigParser
 from logging import getLogger
 import httplib2
 import json
+import hashlib
+import random
+# import pdb
 import threading
 import os
-# from . import logger
 from .apisender import *
 
 lg = getLogger("sslogger")
@@ -19,7 +21,7 @@ lg = getLogger("sslogger")
 
 class StressTest(object):
 
-    def __init__(self, app, test_type, count):
+    def __init__(self, app, test_type, count, is_multiple=False):
         try:
             parser = scp()
             dir_path = os.path.dirname(__file__)
@@ -34,7 +36,11 @@ class StressTest(object):
             self.openid = parser.get('userinfo', 'openid')
             self.appid = parser.get('appinfo', 'appid')
             self.app = app
-            if self.app not in ['nine', 'xmas', 'chun', 'rotate', 'lottery', 'scratch']:
+            self.m = is_multiple
+            if self.app not in [
+                    'nine', 'xmas', 'chun',
+                    'rotate', 'lottery', 'scratch',
+                    'box']:
                 raise ParamError(self.app)
             self.test_type = test_type
             if self.test_type not in ['page', 'draw']:
@@ -55,7 +61,7 @@ class StressTest(object):
                 return "app/chun/views/" + event_id
             else:
                 raise ParamError(self.test_type)
-        elif self.app in ['nine', 'xmas', 'rotate', 'lottery', 'scratch']:
+        elif self.app in ['nine', 'xmas', 'rotate', 'lottery', 'scratch', 'box']:
             if self.test_type == "draw":
                 return "app/%s/mobile/%s/draw" % (self.app, event_id)
             elif self.test_type == "page":
@@ -67,9 +73,9 @@ class StressTest(object):
 
     def __get_sessionid(self):
         if not self.email:
-            raise Exception("email parameter is null for getSessionId")
+            raise ConfigError('email')
         if not self.password:
-            raise Exception("password parameter is null for getSessionId")
+            raise ConfigError('password')
 
         path = "base/sessions"
         headers = {
@@ -84,16 +90,19 @@ class StressTest(object):
                             body=body, msgType="POST")
         userInfo = json.loads(data)
         lg.debug(userInfo)
-        if userInfo:
+        if userInfo and "sessionID" in userInfo:
             return userInfo["sessionID"]
         else:
-            return ''
+            raise ConfigError('email or password')
 
     def __get_eventid(self):
         if self.app == "chun":
             path = "app/chun/lotteries?page=1&count=1"
-        else:
+        elif self.app in ['nine', 'xmas', 'rotate', 'lottery', 'scratch']:
             path = "app/%s/events?page=1&pageSize=1" % self.app
+        elif self.app in ['box']:
+            path = ("http://qing.mocha.server.sensoro.com/"
+                    "app/%s/create?page=1&count=1" % self.app)
         headers = {
             "Accept": "application/json, text/plain, */*",
             "Connection": "Keep-Alive",
@@ -112,13 +121,18 @@ class StressTest(object):
             lg.error("data: %s" % data)
             raise GetEventError(data)
         eventInfo = json.loads(data)
-        if self.app == "chun":
+        if self.app in ['chun', 'box']:
             return eventInfo["data"][0]["_id"]
         return eventInfo["events"][0]["_id"]
 
+    def __get_random_openid(self):
+        random_number = random.randint(1, 1000)
+        now = time.strftime("%Y-%m-%d %X", time.localtime())
+        return hashlib.md5(now+str(random_number)).hexdigest()
+
     def stress_test(self):
         path = self.__get_path()
-        if self.app == "chun":
+        if self.app in ['chun', 'box']:
             msgType = "POST"
         else:
             msgType = "GET"
@@ -128,8 +142,14 @@ class StressTest(object):
         head = {
             "Connection": "Keep-Alive",
             "Cache-Control": "no-cache",
+            "Content-Type": "application/json",
             "Cookie": cookie,
         }
+        if self.app in ['box']:
+            # pdb.set_trace()
+            body = json.dumps({"openId": self.openid})
+        else:
+            body = ""
         threads = []
         for i in range(10):
             # http object is not thread safe, so we have to
@@ -138,8 +158,8 @@ class StressTest(object):
             t = threading.Thread(
                 target=sendAPI,
                 args=(http, '', '', self.host,
-                      path, head, '',
-                      self.count/10, msgType)
+                      path, head, body,
+                      self.count / 10, msgType)
             )
             threads.append(t)
             t.setDaemon(True)
@@ -158,3 +178,9 @@ class GetEventError(Exception):
     def __init__(self, res_data):
         super(GetEventError, self).__init__()
         self.value = res_data
+
+
+class ConfigError(Exception):
+    def __init__(self, config_param):
+        super(GetEventError, self).__init__()
+        self.value = config_param

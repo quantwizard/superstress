@@ -45,6 +45,8 @@ def Main():
     except GetEventError, e:
         print "Get event id failed."
         print "The response info is: %s" % e.value
+    except ConfigError, e:
+        print "Your config [%s] in mainConfig.ini may be wrong." % e.value
 
 if __name__ == '__main__':
     Main()

@@ -17,9 +17,6 @@ def Main():
     2. %prog -a nine -t page -c 200     // stress test with nine app, get H5 page with 200 times
     '''
     parser = optparse.OptionParser(usage=usage)
-    # parser.add_option("-v", "--verbos",
-    #                   action="store_true", dest="verbose", default=False,
-    #                   help="Don't show the procession information [default: False]")
 
     parser.add_option("-a", "--app", dest="app_name", default="chun",
                       help="Specify the app you want to do stress test [default: %default]")
@@ -40,7 +37,9 @@ def Main():
     options, args = parser.parse_args()
     config_logger(options.verbose)
     try:
-        st = StressTest(options.app_name, options.test_type, options.count, options.is_multi)
+        st = StressTest(
+            options.app_name, options.test_type,
+            options.count, options.is_multi)
         st.stress_test()
     except ParamError, e:
         print "The parameter you input is wrong: %s" % e.value

@@ -12,6 +12,7 @@ import json
 import time
 import hashlib
 import random
+import uuid
 # import pdb
 import threading
 import os
@@ -126,16 +127,20 @@ class StressTest(object):
             return eventInfo["data"][0]["_id"]
         return eventInfo["events"][0]["_id"]
 
-    def __get_random_openid(self):
-        random_number = random.randint(1, 1000)
-        now = time.strftime("%Y-%m-%d %X", time.localtime())
-        return hashlib.md5(now+str(random_number)).hexdigest()
+    def __get_unique_openid(self):
+        return uuid.uuid1()
+
+        # The following code has little propability to generate
+        # same open id, so we use uuid instead.
+        # random_number = random.randint(1, 1000)
+        # now = time.strftime("%Y-%m-%d %X", time.localtime())
+        # return hashlib.md5(now+str(random_number)).hexdigest()
 
     def __sendAPI(self, http, path, headers, body, count, msg_type):
         url = urljoin(self.host, path)
         for i in xrange(count):
             if self.is_multiple:
-                openid = self.__get_random_openid()
+                openid = self.__get_unique_openid()
                 cookie = ("snsapi_userinfo:%s="
                           '{"openid":"%s"}') % (self.appid, openid)
                 headers = {
@@ -163,7 +168,8 @@ class StressTest(object):
             msg_type = "POST"
         else:
             msg_type = "GET"
-        t_count = 10
+        # set number of threads
+        t_count = 20
         threads = []
         if not self.is_multiple:
             cookie = ("snsapi_userinfo:%s="
@@ -174,14 +180,19 @@ class StressTest(object):
                 "Content-Type": "application/json",
                 "Cookie": cookie,
             }
+            left_times = self.count % t_count
             for i in range(t_count):
                 # http object is not thread safe, so we have to
                 # create http object for each thread
                 http = httplib2.Http()
+                request_times = self.count/t_count
+                # let the index 0 thread to add the remainer times
+                if left_times and i == 0:
+                    request_times = self.count/t_count + left_times
                 t = threading.Thread(
                     target=self.__sendAPI,
                     args=(http, path, head, body,
-                          self.count/t_count, msg_type)
+                          request_times, msg_type)
                 )
                 threads.append(t)
                 t.setDaemon(True)

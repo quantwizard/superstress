@@ -30,7 +30,9 @@ def Main():
     parser.add_option("-v", "--verbose",
                       action="store_true", dest="verbose", default=False,
                       help="Enable console output.")
-
+    parser.add_option("-m", "--multiple",
+                      action="store_true", dest="is_multi", default=False,
+                      help="Enable multiple user mode (different open id)")
     if len(sys.argv) == 1:
         parser.print_help()
         return
@@ -38,7 +40,7 @@ def Main():
     options, args = parser.parse_args()
     config_logger(options.verbose)
     try:
-        st = StressTest(options.app_name, options.test_type, options.count)
+        st = StressTest(options.app_name, options.test_type, options.count, options.is_multi)
         st.stress_test()
     except ParamError, e:
         print "The parameter you input is wrong: %s" % e.value

@@ -36,7 +36,7 @@ class StressTest(object):
             self.openid = parser.get('userinfo', 'openid')
             self.appid = parser.get('appinfo', 'appid')
             self.app = app
-            self.m = is_multiple
+            self.is_multiple = is_multiple
             if self.app not in [
                     'nine', 'xmas', 'chun',
                     'rotate', 'lottery', 'scratch',
@@ -130,40 +130,75 @@ class StressTest(object):
         now = time.strftime("%Y-%m-%d %X", time.localtime())
         return hashlib.md5(now+str(random_number)).hexdigest()
 
+    def __sendAPI(self, http, path, headers, body, count, msg_type):
+        if self.is_multiple:
+            openid = self.__get_random_openid()
+            cookie = ("snsapi_userinfo:%s="
+                      '{"openid":"%s"}') % (self.appid, openid)
+            headers = {
+                        "Connection": "Keep-Alive",
+                        "Cache-Control": "no-cache",
+                        "Content-Type": "application/json",
+                        "Cookie": cookie,
+                     }
+            if self.app in ['box']:
+                body = json.dumps({"openId": openid})
+
+        url = urljoin(self.host, path)
+        for i in xrange(count):
+            lg.info(url)
+            # lg.debug(body)
+            response, data = http.request(url, msg_type, headers=headers, body=body)
+            # lg.debug(response)
+            # lg.debug(data)
+
     def stress_test(self):
         path = self.__get_path()
-        if self.app in ['chun', 'box']:
-            msgType = "POST"
-        else:
-            msgType = "GET"
-
-        cookie = ("snsapi_userinfo:%s="
-                  '{"openid":"%s"}') % (self.appid, self.openid)
-        head = {
-            "Connection": "Keep-Alive",
-            "Cache-Control": "no-cache",
-            "Content-Type": "application/json",
-            "Cookie": cookie,
-        }
         if self.app in ['box']:
             # pdb.set_trace()
             body = json.dumps({"openId": self.openid})
         else:
             body = ""
+        if self.app in ['chun', 'box']:
+            msg_type = "POST"
+        else:
+            msg_type = "GET"
+        t_count = 10
         threads = []
-        for i in range(10):
-            # http object is not thread safe, so we have to
-            # create http object for each thread
-            http = httplib2.Http()
-            t = threading.Thread(
-                target=sendAPI,
-                args=(http, '', '', self.host,
-                      path, head, body,
-                      self.count / 10, msgType)
-            )
-            threads.append(t)
-            t.setDaemon(True)
-            t.start()
+        if not self.is_multiple:
+            cookie = ("snsapi_userinfo:%s="
+                      '{"openid":"%s"}') % (self.appid, self.openid)
+            head = {
+                "Connection": "Keep-Alive",
+                "Cache-Control": "no-cache",
+                "Content-Type": "application/json",
+                "Cookie": cookie,
+            }
+            for i in range(t_count):
+                # http object is not thread safe, so we have to
+                # create http object for each thread
+                http = httplib2.Http()
+                t = threading.Thread(
+                    target=self.__sendAPI,
+                    args=(http, path, head, body,
+                          self.count/t_count, msg_type)
+                )
+                threads.append(t)
+                t.setDaemon(True)
+                t.start()
+        else:
+            for i in range(t_count):
+                # http object is not thread safe, so we have to
+                # create http object for each thread
+                http = httplib2.Http()
+                t = threading.Thread(
+                    target=self.__sendAPI,
+                    args=(http, path, '', '',
+                          self.count/t_count, msg_type)
+                )
+                threads.append(t)
+                t.setDaemon(True)
+                t.start()
         for t in threads:
             t.join(10000)
 

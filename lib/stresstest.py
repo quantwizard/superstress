@@ -9,9 +9,7 @@ import ConfigParser
 from logging import getLogger
 import httplib2
 import json
-import time
-import hashlib
-import random
+import Queue
 import uuid
 # import pdb
 import threading
@@ -23,7 +21,7 @@ lg = getLogger("sslogger")
 
 class StressTest(object):
 
-    def __init__(self, app, test_type, count, is_multiple=False):
+    def __init__(self, app, test_type, count, users):
         try:
             parser = scp()
             dir_path = os.path.dirname(__file__)
@@ -39,7 +37,6 @@ class StressTest(object):
             self.appid = parser.get('appinfo', 'appid')
             self.app = app
             self.event_id = self.__get_eventid()
-            self.is_multiple = is_multiple
             if self.app not in [
                     'nine', 'xmas', 'chun',
                     'rotate', 'lottery', 'scratch',
@@ -48,7 +45,9 @@ class StressTest(object):
             self.test_type = test_type
             if self.test_type not in ['page', 'draw']:
                 raise ParamError(self.test_type)
-            self.count = int(count)
+            # self.count = int(count)
+            # self.users = int(users)
+            self.queue = self.__generate_queue(int(count), int(users))
 
         except ConfigParser.Error, e:
             lg.error("StressTest init failed.")
@@ -145,29 +144,38 @@ class StressTest(object):
         # now = time.strftime("%Y-%m-%d %X", time.localtime())
         # return hashlib.md5(now+str(random_number)).hexdigest()
 
-    def __sendAPI(self, http, path, headers, body, count, msg_type):
+    def __generate_queue(self, count, users):
+        q = Queue.Queue()
+        for i in xrange(users):
+            openid = self.__get_unique_openid()
+            for j in xrange(count):
+                q.put(openid)
+        return q
+
+    def __sendAPI(self, http, path, headers, body, msg_type):
         url = urljoin(self.host, path)
-        for i in xrange(count):
-            if self.is_multiple:
-                openid = self.__get_unique_openid()
-                cookie = ("snsapi_userinfo:%s="
-                          '{"openid":"%s"}') % (self.appid, openid)
-                headers = {
-                    "Connection": "Keep-Alive",
-                    "Cache-Control": "no-cache",
-                    "Content-Type": "application/json",
-                    "Cookie": cookie,
-                }
-                if self.app in ['box']:
-                    body = json.dumps({"openId": openid})
-                elif self.app in ['face']:
-                    body = json.dumps({
-                                      "eid": self.event_id,
-                                      "imgUrl": "http://7u2jeb.com1.z0.glb.clouddn.com/o_1a6f89q3jja9qdm10gb1dp41k2dn.jpg?imageMogr2/auto-orient",
-                                      "openId": openid,
-                                      "avatar": "http://picm.photophoto.cn/005/008/002/0080020468.jpg",
-                                      "nickname": "new user"
-                                      })
+        while True:
+            if self.queue.empty():
+                break
+            openid = self.queue.get()
+            cookie = ("snsapi_userinfo:%s="
+                      '{"openid":"%s"}') % (self.appid, openid)
+            headers = {
+                "Connection": "Keep-Alive",
+                "Cache-Control": "no-cache",
+                "Content-Type": "application/json",
+                "Cookie": cookie,
+            }
+            if self.app in ['box']:
+                body = json.dumps({"openId": openid})
+            elif self.app in ['face']:
+                body = json.dumps({
+                    "eid": self.event_id,
+                    "imgUrl": "http://7u2jeb.com1.z0.glb.clouddn.com/o_1a6f89q3jja9qdm10gb1dp41k2dn.jpg?imageMogr2/auto-orient",
+                    "openId": openid,
+                    "avatar": "http://picm.photophoto.cn/005/008/002/0080020468.jpg",
+                    "nickname": "new user"
+                })
             lg.info(url)
             # lg.debug(body)
             response, data = http.request(
@@ -177,65 +185,25 @@ class StressTest(object):
 
     def stress_test(self):
         path = self.__get_path()
-        if self.app in ['box']:
-            # pdb.set_trace()
-            body = json.dumps({"openId": self.openid})
-        elif self.app in ['face']:
-            body = json.dumps({
-                              "eid": self.event_id,
-                              "imgUrl": "http://7u2jeb.com1.z0.glb.clouddn.com/o_1a6f89q3jja9qdm10gb1dp41k2dn.jpg?imageMogr2/auto-orient",
-                              "openId": self.openid,
-                              "avatar": "http://picm.photophoto.cn/005/008/002/0080020468.jpg",
-                              "nickname": "new user"
-                              })
-        else:
-            body = ""
-        if self.app in ['chun', 'box']:
+        if self.app in ['chun', 'box'] and self.test_type == "draw":
             msg_type = "POST"
         else:
             msg_type = "GET"
         # set number of threads
         t_count = 20
         threads = []
-        if not self.is_multiple:
-            cookie = ("snsapi_userinfo:%s="
-                      '{"openid":"%s"}') % (self.appid, self.openid)
-            head = {
-                "Connection": "Keep-Alive",
-                "Cache-Control": "no-cache",
-                "Content-Type": "application/json",
-                "Cookie": cookie,
-            }
-            left_times = self.count % t_count
-            for i in range(t_count):
-                # http object is not thread safe, so we have to
-                # create http object for each thread
-                http = httplib2.Http()
-                request_times = self.count / t_count
-                # let the index 0 thread to add the remainer times
-                if left_times and i == 0:
-                    request_times = self.count / t_count + left_times
-                t = threading.Thread(
-                    target=self.__sendAPI,
-                    args=(http, path, head, body,
-                          request_times, msg_type)
-                )
-                threads.append(t)
-                t.setDaemon(True)
-                t.start()
-        else:
-            for i in range(t_count):
-                # http object is not thread safe, so we have to
-                # create http object for each thread
-                http = httplib2.Http()
-                t = threading.Thread(
-                    target=self.__sendAPI,
-                    args=(http, path, '', '',
-                          self.count / t_count, msg_type)
-                )
-                threads.append(t)
-                t.setDaemon(True)
-                t.start()
+        for i in range(t_count):
+            # http object is not thread safe, so we have to
+            # create http object for each thread
+            http = httplib2.Http()
+
+            t = threading.Thread(
+                target=self.__sendAPI,
+                args=(http, path, '', '', msg_type)
+            )
+            threads.append(t)
+            t.setDaemon(True)
+            t.start()
         for t in threads:
             t.join(10000)
 

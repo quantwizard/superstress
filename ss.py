@@ -13,23 +13,23 @@ from lib.logger import config_logger
 def Main():
     usage = '''Usage: %prog [-options][args]\r\n
     Example:
-    1. %prog -a xmas -c 100             // stress test with xmas app, draw with 100 times
-    2. %prog -a nine -t page -c 200     // stress test with nine app, get H5 page with 200 times
+    1. %prog -a xmas -c 10 -u 100       // stress test with xmas app, draw with 100 users and each user draw 10 times
+    2. %prog -a nine -t page -v         // stress test with nine app, get H5 page with 100 users and each user draw 1 time
     '''
     parser = optparse.OptionParser(usage=usage)
 
     parser.add_option("-a", "--app", dest="app_name", default="chun",
                       help="Specify the app you want to do stress test [default: %default]")
-    parser.add_option("-c", "--count", dest="count", default="100",
-                      help="Specify the http request times you want to sent [default: %default]")
+    parser.add_option("-c", "--count", dest="count", default="1",
+                      help="Specify the http request times for each user [default: %default]")
+    parser.add_option("-u", "--users", dest="users", default="100",
+                      help="Specify how many different users [default: %default]")
     parser.add_option("-t", "--type", dest="test_type", default="draw",
                       help="Specify the test type. Currently only 2 types page/draw [default: %default]")
     parser.add_option("-v", "--verbose",
                       action="store_true", dest="verbose", default=False,
                       help="Enable console output.")
-    parser.add_option("-m", "--multiple",
-                      action="store_true", dest="is_multi", default=False,
-                      help="Enable multiple user mode (different open id)")
+
     if len(sys.argv) == 1:
         parser.print_help()
         return
@@ -39,7 +39,7 @@ def Main():
     try:
         st = StressTest(
             options.app_name, options.test_type,
-            options.count, options.is_multi)
+            options.count, options.users)
         st.stress_test()
     except ParamError, e:
         print "The parameter you input is wrong: %s" % e.value

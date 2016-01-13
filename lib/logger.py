@@ -6,6 +6,7 @@
 import logging
 import os
 
+
 def config_logger(is_verbose=False):
     logger = logging.getLogger("sslogger")
     logger.setLevel(logging.DEBUG)
@@ -19,4 +20,3 @@ def config_logger(is_verbose=False):
         console_handler = logging.StreamHandler()
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
-

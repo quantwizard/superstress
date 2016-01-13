@@ -95,7 +95,9 @@ class StressTest(object):
         }
         account = {"email": self.email, "password": self.password}
         body = json.dumps(account)
-        res, data = self.http.request(urljoin(self.host, path), "POST",
+        url = urljoin(self.host, path)
+        lg.debug(url)
+        res, data = self.http.request(url, "POST",
                                       headers=headers, body=body)
         # res, data = sendAPI(self.http, '', '', self.host, path, head=headers,
         #                     body=body, msgType="POST")
@@ -121,7 +123,9 @@ class StressTest(object):
             "Cache-Control": "no-cache",
             "x-session-id": self.__get_sessionid()
         }
-        res, data = self.http.request(urljoin(self.host, path), "GET",
+        url = urljoin(self.host, path)
+        lg.debug(url)
+        res, data = self.http.request(url, "GET",
                                       headers=headers)
         # res, data = sendAPI(self.http, '', '',
         #                     self.host, path,

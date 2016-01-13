@@ -154,6 +154,12 @@ class StressTest(object):
 
     def __generate_queue(self, count, users):
         q = Queue.Queue()
+        if users <= 0:
+            raise ParamError(str(users))
+        elif users == 1:
+            for i in xrange(count):
+                q.put(self.openid)
+            return q
         for i in xrange(users):
             openid = self.__get_unique_openid()
             for j in xrange(count):

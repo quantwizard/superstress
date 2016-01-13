@@ -4,5 +4,6 @@
 1. You have configured the mainConfig.ini 
 2. You have configured a corresponding event on the X platform.
 3. You have installed Python2.7
+4. Install httplib2 with easy_install
 
 ### Try with ss.py to see the help document

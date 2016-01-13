@@ -95,8 +95,10 @@ class StressTest(object):
         }
         account = {"email": self.email, "password": self.password}
         body = json.dumps(account)
-        res, data = sendAPI(self.http, '', '', self.host, path, head=headers,
-                            body=body, msgType="POST")
+        res, data = self.http.request(urljoin(self.host, path), "POST",
+                                      headers=headers, body=body)
+        # res, data = sendAPI(self.http, '', '', self.host, path, head=headers,
+        #                     body=body, msgType="POST")
         userInfo = json.loads(data)
         lg.debug(userInfo)
         if userInfo and "sessionID" in userInfo:
@@ -119,10 +121,12 @@ class StressTest(object):
             "Cache-Control": "no-cache",
             "x-session-id": self.__get_sessionid()
         }
-        res, data = sendAPI(self.http, '', '',
-                            self.host, path,
-                            head=headers, msgType="GET"
-                            )
+        res, data = self.http.request(urljoin(self.host, path), "GET",
+                                      headers=headers)
+        # res, data = sendAPI(self.http, '', '',
+        #                     self.host, path,
+        #                     head=headers, msgType="GET"
+        #                     )
         lg.debug('res for getEventId: %s' % res)
         lg.debug('data for getEventId: %s' % data)
         if not parseResponse(res):

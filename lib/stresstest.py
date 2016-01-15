@@ -3,7 +3,6 @@
 # Copyright 2015-2016
 # Author: Liu Feng
 
-# from __future__ import division
 from ConfigParser import SafeConfigParser as scp
 import ConfigParser
 from logging import getLogger
@@ -40,7 +39,7 @@ class StressTest(object):
             if self.app not in [
                     'nine', 'xmas', 'chun',
                     'rotate', 'lottery', 'scratch',
-                    'box', 'face']:
+                    'box', 'face', 'shake']:
                 raise ParamError(self.app)
             self.test_type = test_type
             if self.test_type not in ['page', 'draw']:
@@ -73,6 +72,13 @@ class StressTest(object):
         elif self.app in ['face']:
             if self.test_type == "draw":
                 return "app/%s/events/draw" % self.app
+            elif self.test_type == "page":
+                return "app/%s/views/%s" % (self.app, self.event_id)
+            else:
+                raise ParamError(self.test_type)
+        elif self.app in ['shake']:
+            if self.test_type == "draw":
+                return "app/%s/view/chou/%s" % (self.app, self.event_id)
             elif self.test_type == "page":
                 return "app/%s/views/%s" % (self.app, self.event_id)
             else:
@@ -117,6 +123,8 @@ class StressTest(object):
             path = "app/%s/create?page=1&count=1" % self.app
         elif self.app in ['face']:
             path = "app/%s/events?page=1&count=1" % self.app
+        elif self.app in ['shake']:
+            path = "app/%s/shakes?page=1&count=1" % self.app
         headers = {
             "Accept": "application/json, text/plain, */*",
             "Connection": "Keep-Alive",
@@ -199,7 +207,7 @@ class StressTest(object):
 
     def stress_test(self):
         path = self.__get_path()
-        if self.app in ['chun', 'box'] and self.test_type == "draw":
+        if self.app in ['chun', 'box', 'shake'] and self.test_type == "draw":
             msg_type = "POST"
         else:
             msg_type = "GET"

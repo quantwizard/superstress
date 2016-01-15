@@ -78,7 +78,7 @@ class StressTest(object):
                 raise ParamError(self.test_type)
         elif self.app in ['shake']:
             if self.test_type == "draw":
-                return "app/%s/view/chou/%s" % (self.app, self.event_id)
+                return "app/%s/views/chou/%s" % (self.app, self.event_id)
             elif self.test_type == "page":
                 return "app/%s/views/%s" % (self.app, self.event_id)
             else:
@@ -147,7 +147,7 @@ class StressTest(object):
             lg.error("data: %s" % data)
             raise GetEventError(data)
         eventInfo = json.loads(data)
-        if self.app in ['chun', 'box', 'face']:
+        if self.app in ['chun', 'box', 'face', 'shake']:
             return eventInfo["data"][0]["_id"]
         return eventInfo["events"][0]["_id"]
 
@@ -202,8 +202,8 @@ class StressTest(object):
             # lg.debug(body)
             response, data = http.request(
                 url, msg_type, headers=headers, body=body)
-            # lg.debug(response)
-            # lg.debug(data)
+            lg.debug("<response>: %s" % response)
+            lg.debug("<res_data>: %s" % data)
 
     def stress_test(self):
         path = self.__get_path()

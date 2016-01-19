@@ -202,8 +202,8 @@ class StressTest(object):
             # lg.debug(body)
             response, data = http.request(
                 url, msg_type, headers=headers, body=body)
-            lg.debug("<response>: %s" % response)
-            lg.debug("<res_data>: %s" % data)
+            # lg.debug("<response>: %s" % response)
+            # lg.debug("<res_data>: %s" % data)
 
     def stress_test(self):
         path = self.__get_path()

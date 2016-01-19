@@ -5,11 +5,16 @@
 
 from ConfigParser import SafeConfigParser as scp
 import ConfigParser
+import gevent.monkey
+gevent.monkey.patch_socket()
+
+import gevent
 from logging import getLogger
 import httplib2
 import json
 import Queue
 import uuid
+
 # import pdb
 import threading
 import os
@@ -212,22 +217,20 @@ class StressTest(object):
         else:
             msg_type = "GET"
         # set number of threads
-        t_count = 20
+        t_count = 200
         threads = []
         for i in range(t_count):
             # http object is not thread safe, so we have to
             # create http object for each thread
             http = httplib2.Http()
 
-            t = threading.Thread(
-                target=self.__sendAPI,
-                args=(http, path, '', '', msg_type)
-            )
+            t = gevent.spawn(
+                self.__sendAPI,
+                http, path, '', '', msg_type)
             threads.append(t)
-            t.setDaemon(True)
-            t.start()
-        for t in threads:
-            t.join(10000)
+            # t.setDaemon(True)
+            # t.start()
+        gevent.joinall(threads)
 
 
 class ParamError(Exception):

@@ -29,6 +29,9 @@ def Main():
     parser.add_option("-v", "--verbose",
                       action="store_true", dest="verbose", default=False,
                       help="Enable console output.")
+    parser.add_option("-vv", "--vverbose",
+                      action="store_true", dest="vverbose", default=False,
+                      help="Enable http response/data output.")
 
     if len(sys.argv) == 1:
         parser.print_help()
@@ -39,7 +42,7 @@ def Main():
     try:
         st = StressTest(
             options.app_name, options.test_type,
-            options.count, options.users)
+            options.count, options.users, options.vverbose)
         st.stress_test()
     except ParamError, e:
         print "The parameter you input is wrong: %s" % e.value

@@ -202,8 +202,8 @@ class StressTest(object):
             # lg.debug(body)
             response, data = http.request(
                 url, msg_type, headers=headers, body=body)
-            # lg.debug("<response>: %s" % response)
-            # lg.debug("<res_data>: %s" % data)
+            lg.debug("<response>: %s" % response)
+            lg.debug("<res_data>: %s" % data)
 
     def stress_test(self):
         path = self.__get_path()
@@ -212,7 +212,7 @@ class StressTest(object):
         else:
             msg_type = "GET"
         # set number of threads
-        t_count = 200
+        t_count = 100
         threads = []
         for i in range(t_count):
             # http object is not thread safe, so we have to

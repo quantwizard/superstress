@@ -10,6 +10,7 @@ def main():
     err_4200127 = 0
     err_4200125 = 0
     cards = 0
+    hbs = 0
     total_res = 0
     re_4200127 = re.compile(r'4200127')
     re_4200125 = re.compile(r'4200125')
@@ -20,6 +21,8 @@ def main():
                 total_res += 1
                 if line.find(r'CARD') != -1:
                     cards += 1
+                elif line.find(r'HB') != -1:
+                    hbs += 1
                 elif re_4200125.search(line) is not None:
                     err_4200125 += 1
                 elif re_4200127.search(line) is not None:
@@ -27,6 +30,7 @@ def main():
 
     print "The total response: %d" % total_res
     print "The cards: %d" % cards
+    print "The hbs: %d" % hbs 
     print "The error code 4200127: %d" % err_4200127
     print "The error code 4200125: %d" % err_4200125
 

@@ -6,4 +6,9 @@
 3. You have installed Python2.7
 4. Install httplib2 with easy_install
 
-### Try with ss.py to see the help document
+### Type ./ss.py -h to see the help document.
+
+------------------
+
+### statlog.py is used to analyze the ss.log and get the statistics. Please configure statLog.ini before use this program.
+### Type ./statlog.py -h to see the help document.

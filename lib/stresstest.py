@@ -192,6 +192,7 @@ class StressTest(object):
                 "Content-Type": "application/json",
                 "Cookie": cookie,
             }
+            body = None
             if self.app in ['box']:
                 body = json.dumps({"openId": openid})
             elif self.app in ['face']:

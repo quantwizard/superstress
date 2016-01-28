@@ -16,7 +16,6 @@ import Queue
 import uuid
 
 # import pdb
-import threading
 import os
 from .apisender import *
 
@@ -179,7 +178,7 @@ class StressTest(object):
                 q.put(openid)
         return q
 
-    def __sendAPI(self, http, path, headers, body, msg_type):
+    def __sendAPI(self, http, path, msg_type):
         url = urljoin(self.host, path)
         while True:
             if self.queue.empty():
@@ -207,8 +206,8 @@ class StressTest(object):
             # lg.debug(body)
             response, data = http.request(
                 url, msg_type, headers=headers, body=body)
-            # lg.debug("<response>: %s" % response)
-            # lg.debug("<res_data>: %s" % data)
+            lg.debug("<response>: %s" % response)
+            lg.debug("<res_data>: %s" % data)
 
     def stress_test(self):
         path = self.__get_path()
@@ -216,20 +215,19 @@ class StressTest(object):
             msg_type = "POST"
         else:
             msg_type = "GET"
-        # set number of threads
+        # set number of greenlets
         t_count = 200
         threads = []
         for i in range(t_count):
             # http object is not thread safe, so we have to
             # create http object for each thread
+            # for greenlet, I'm not sure
             http = httplib2.Http()
 
             t = gevent.spawn(
                 self.__sendAPI,
-                http, path, '', '', msg_type)
+                http, path, msg_type)
             threads.append(t)
-            # t.setDaemon(True)
-            # t.start()
         gevent.joinall(threads)
 
 

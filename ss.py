@@ -29,9 +29,10 @@ def Main():
     parser.add_option("-v", "--verbose",
                       action="store_true", dest="verbose", default=False,
                       help="Enable console output.")
-    parser.add_option("-vv", "--vverbose",
-                      action="store_true", dest="vverbose", default=False,
+    parser.add_option("-r", "--response",
+                      action="store_true", dest="response", default=False,
                       help="Enable http response/data output.")
+    
     if len(sys.argv) == 1:
         parser.print_help()
         return

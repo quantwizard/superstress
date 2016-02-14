@@ -36,9 +36,9 @@ class Stat(object):
             for line in f:
                 if line.find(r'<res_data>') != -1:
                     total_res += 1
-                for opt, search_re in self.search_dict.iteritems():
-                    if search_re.search(line) is not None:
-                        results[opt] += 1
+                    for opt, search_re in self.search_dict.iteritems():
+                        if search_re.search(line) is not None:
+                            results[opt] += 1
         print "The total response: %d" % total_res
         for option in results:
             print "The %s: %d" % (option, results[option])

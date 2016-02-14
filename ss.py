@@ -11,10 +11,10 @@ from lib.logger import config_logger
 
 
 def Main():
-    usage = '''Usage: %prog [-options][args]\r\n
+    usage = '''Usage: %prog [-options][args]. If -c and/or -u is not specified, use default value.\r\n
     Example:
     1. %prog -a xmas -c 10 -u 100       // stress test with xmas app, draw with 100 users and each user draw 10 times
-    2. %prog -a nine -t page -v         // stress test with nine app, get H5 page with 100 users and each user draw 1 time
+    2. %prog -a nine -t page -v         // stress test with nine app, get H5 page of the app. 
     '''
     parser = optparse.OptionParser(usage=usage)
 
@@ -32,7 +32,7 @@ def Main():
     parser.add_option("-r", "--response",
                       action="store_true", dest="response", default=False,
                       help="Enable http response/data output.")
-    
+
     if len(sys.argv) == 1:
         parser.print_help()
         return

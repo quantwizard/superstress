@@ -1,7 +1,7 @@
 # superstress
 ### This program is used for stress testing of X platform.
 ### Before you use this program, make sure:
-1. You have configured the mainConfig.ini 
+1. You have configured the mainConfig.ini (notice that if you change account info, make sure appid is also changed)
 2. You have configured a corresponding event on the X platform.
 3. You have installed Python2.7
 4. Install httplib2 with easy_install

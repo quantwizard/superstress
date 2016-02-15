@@ -42,7 +42,7 @@ def Main():
     try:
         st = StressTest(
             options.app_name, options.test_type,
-            options.count, options.users, options.vverbose)
+            options.count, options.users, options.response)
         st.stress_test()
     except ParamError, e:
         print "The parameter you input is wrong: %s" % e.value
